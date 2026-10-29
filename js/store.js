@@ -33,7 +33,7 @@ const defaults = () => ({
   version: 1,
   days: {},
   presets: DEFAULT_PRESETS.map((p) => ({ ...p })),
-  settings: { shortcutName: 'hibi アラーム', dayStartHour: 6 },
+  settings: { shortcutName: 'hibi アラーム', calShortcutName: 'hibi カレンダー', calSync: null, dayStartHour: 6 },
 });
 
 let state = load();

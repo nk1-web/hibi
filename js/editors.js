@@ -43,7 +43,7 @@ export function openPlanEditor(key, plan, { start = 7 * 60 } = {}) {
   const isNew = !plan;
   const p = plan
     ? { ...plan, link: { ...(plan.link || { kind: 'none', value: '' }) } }
-    : { id: store.uid(), title: '', start, end: Math.min(start + 60, 1440), cat: 'life', alarm: false, link: { kind: 'none', value: '' }, memo: '' };
+    : { id: store.uid(), title: '', start, end: Math.min(start + 60, 1440), cat: 'life', notify: true, alarm: false, link: { kind: 'none', value: '' }, memo: '' };
 
   const presets = isNew ? store.presets() : [];
   const body = h(`
@@ -68,6 +68,10 @@ export function openPlanEditor(key, plan, { start = 7 * 60 } = {}) {
         <label class="row"><span>終了</span><input type="time" data-ref="end" value="${fmtTime(p.end % 1440)}"></label>
       </div>
       <div class="group">
+        <label class="row">
+          <span class="row-main"><b>通知</b><small>開始前にカレンダーから知らせる</small></span>
+          <input type="checkbox" class="switch" data-ref="notify" ${p.notify !== false ? 'checked' : ''}>
+        </label>
         <label class="row">
           <span class="row-main"><b>アラーム</b><small>開始時刻に時計アプリで鳴らす</small></span>
           <input type="checkbox" class="switch" data-ref="alarm" ${p.alarm ? 'checked' : ''}>
@@ -125,6 +129,7 @@ export function openPlanEditor(key, plan, { start = 7 * 60 } = {}) {
       ...p,
       title,
       ...range,
+      notify: r.notify.checked,
       alarm: r.alarm.checked,
       link: { kind: r.linkKind.value, value: r.linkValue.value.trim() },
       memo: r.memo.value.trim(),
@@ -161,7 +166,8 @@ export function openPlanDetail(key, plan) {
         <span class="detail-cat"><i></i>${cat?.label || ''}</span>
         <h3>${esc(plan.title)}</h3>
         <p class="detail-time">${fmtTime(plan.start)} – ${fmtTime(plan.end)}<span>${fmtDuration(plan.end - plan.start)}</span></p>
-        ${plan.alarm ? `<p class="detail-note">${icons.bellSmall}${plan.alarmSent ? '時計アプリに登録済み' : 'アラームは未登録'}</p>` : ''}
+        ${plan.notify !== false ? `<p class="detail-note">${icons.calendar}開始前にカレンダーから通知</p>` : ''}
+        ${plan.alarm ? `<p class="detail-note">${icons.bellSmall}${plan.alarmSent ? '時計アプリにアラーム登録済み' : 'アラームは未登録'}</p>` : ''}
         ${plan.memo ? `<p class="detail-memo">${esc(plan.memo)}</p>` : ''}
       </div>
       ${url ? `<button class="btn is-link" data-act="link">${icons.arrowUpRight}${esc(linkLabel(plan.link))} を開く</button>` : ''}

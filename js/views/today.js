@@ -3,7 +3,7 @@ import { h, esc, refs, toast } from '../ui.js';
 import { icons } from '../icons.js';
 import { confirmSheet } from '../sheet.js';
 import { openPlanEditor, openPlanDetail, openActualEditor, openDiaryEditor } from '../editors.js';
-import { openAlarmSheet, unsentAlarms } from '../alarm.js';
+import { openAlarmSheet, pendingCount } from '../alarm.js';
 import { linkUrl } from '../links.js';
 import {
   WEEK, parseKey, addDays, weekStart, dayKey, isToday, nowMinutes, fmtTimeShort, fmtDuration, fmtDateJa, snap,
@@ -62,7 +62,7 @@ export function createToday(ctx) {
         <div class="head-actions">
           <button class="pill-btn glass" data-act="today" hidden>今日</button>
           <button class="round-btn glass" data-act="diary" aria-label="日記">${icons.diary}</button>
-          <button class="round-btn glass" data-act="alarm" aria-label="アラーム">${icons.bell}<i class="badge" data-ref="badge" hidden></i></button>
+          <button class="round-btn glass" data-act="alarm" aria-label="通知とアラーム">${icons.bell}<i class="badge" data-ref="badge" hidden></i></button>
         </div>
       </header>
       <div class="week" data-ref="week"></div>
@@ -104,7 +104,7 @@ export function createToday(ctx) {
         <small>${WEEK[i]}</small><b>${parseKey(k).getDate()}</b><i class="${has ? 'has' : ''}"></i></button>`;
     }).join('');
 
-    const n = unsentAlarms(ctx.day).length;
+    const n = pendingCount(ctx.day);
     r.badge.hidden = !n;
     r.badge.textContent = n;
   }

@@ -4,7 +4,7 @@ import { h, esc, refs, toast } from '../ui.js';
 import { fmtDuration } from '../date.js';
 import { icons } from '../icons.js';
 import { openSheet, confirmSheet } from '../sheet.js';
-import { openShortcutGuide, sendTestAlarm } from '../alarm.js';
+import { openShortcutGuide, openCalendarGuide, sendTestAlarm } from '../alarm.js';
 import { dayKey } from '../date.js';
 
 export function createSettings() {
@@ -17,7 +17,14 @@ export function createSettings() {
         </div>
       </header>
       <div class="scroller">
-        <p class="group-label">アラーム</p>
+        <p class="group-label">開始前の通知（カレンダー）</p>
+        <div class="group">
+          <label class="row"><span>ショートカット名</span><input data-ref="calShortcut" autocapitalize="off"></label>
+          <button class="row is-nav" data-act="calGuide"><span>ショートカットの作り方</span>${icons.chevronR}</button>
+        </div>
+        <p class="group-foot">これから 7 日間の予定を iPhone の「hibi」カレンダーに入れ、開始前にカレンダーアプリから通知します。</p>
+
+        <p class="group-label">アラーム（時計）</p>
         <div class="group">
           <label class="row"><span>ショートカット名</span><input data-ref="shortcut" autocapitalize="off"></label>
           <button class="row is-nav" data-act="guide"><span>ショートカットの作り方</span>${icons.chevronR}</button>
@@ -47,7 +54,7 @@ export function createSettings() {
         <p class="group-label">このアプリ</p>
         <div class="group">
           <button class="row is-nav" data-act="install"><span>ホーム画面に追加する方法</span>${icons.chevronR}</button>
-          <div class="row"><span>バージョン</span><span class="row-value">0.1.0</span></div>
+          <div class="row"><span>バージョン</span><span class="row-value">0.2.0</span></div>
         </div>
       </div>
     </section>`);
@@ -56,6 +63,7 @@ export function createSettings() {
   function refresh() {
     const s = store.settings();
     if (document.activeElement !== r.shortcut) r.shortcut.value = s.shortcutName;
+    if (document.activeElement !== r.calShortcut) r.calShortcut.value = s.calShortcutName;
     r.dayStart.value = String(s.dayStartHour);
 
     const cats = Object.fromEntries(CATS.map((c) => [c.id, c.label]));
@@ -74,6 +82,11 @@ export function createSettings() {
   r.shortcut.addEventListener('change', () => {
     const v = r.shortcut.value.trim();
     if (v) store.setSetting('shortcutName', v);
+    else refresh();
+  });
+  r.calShortcut.addEventListener('change', () => {
+    const v = r.calShortcut.value.trim();
+    if (v) store.setSetting('calShortcutName', v);
     else refresh();
   });
   r.dayStart.addEventListener('change', () => store.setSetting('dayStartHour', Number(r.dayStart.value)));
@@ -111,6 +124,7 @@ export function createSettings() {
       return;
     }
     if (act === 'guide') openShortcutGuide();
+    else if (act === 'calGuide') openCalendarGuide();
     else if (act === 'test') sendTestAlarm();
     else if (act === 'export') exportBackup();
     else if (act === 'install') openInstallGuide();
