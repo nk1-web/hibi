@@ -1,5 +1,5 @@
 // ネットワーク優先・失敗時はキャッシュ。更新がすぐ反映され、オフラインでも開ける。
-const CACHE = 'hibi-v3';
+const CACHE = 'hibi-v4';
 const SHELL = [
   './',
   'index.html',

@@ -1,4 +1,6 @@
 // データはすべて端末内（localStorage）。サーバーには送らない。
+import { dayKey } from './date.js';
+
 const KEY = 'hibi:v1';
 
 export const CATS = [
@@ -43,12 +45,17 @@ const listeners = new Set();
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return { ...defaults(), ...parsed, settings: { ...defaults().settings, ...parsed.settings } };
-    }
+    if (raw) return normalize(JSON.parse(raw));
   } catch {}
   return defaults();
+}
+
+// 古い形式のデータを今の形にそろえる
+function normalize(parsed) {
+  const next = { ...defaults(), ...parsed, settings: { ...defaults().settings, ...parsed.settings } };
+  // やることは最初は日付なしの一覧だった。期限の日、なければ今日のものにする
+  next.todos = (next.todos || []).map(({ due, ...t }) => ({ ...t, day: t.day || due || dayKey() }));
+  return next;
 }
 
 const notify = () => listeners.forEach((fn) => fn());
@@ -193,17 +200,23 @@ export function resetPresets() {
   commit();
 }
 
-/* ---------- やること（並び順がそのまま優先順位） ---------- */
+/* ---------- やること（日ごと。並び順がそのまま優先順位） ---------- */
 
 export const todos = () => state.todos;
-export const activeTodos = () => state.todos.filter((t) => !t.done);
-export const doneTodos = () => state.todos.filter((t) => t.done).sort((a, b) => b.doneAt - a.doneAt);
+export const activeTodos = (day) => state.todos.filter((t) => t.day === day && !t.done);
+export const doneTodos = (day) => state.todos.filter((t) => t.day === day && t.done).sort((a, b) => b.doneAt - a.doneAt);
+export const openTodos = () => state.todos.filter((t) => !t.done);
+// その日より前に残っている未完了
+export const leftoverTodos = (day) => state.todos.filter((t) => !t.done && t.day < day).sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
 
-// 新しいものは一番下（いちばん低い優先順位）に入る
+// 新しいもの・別の日に移したものは、その日の一番下（いちばん低い優先順位）に入る
 export function saveTodo(todo) {
   const i = state.todos.findIndex((t) => t.id === todo.id);
-  if (i >= 0) state.todos[i] = todo;
-  else state.todos.push(todo);
+  if (i >= 0 && state.todos[i].day === todo.day) state.todos[i] = todo;
+  else {
+    if (i >= 0) state.todos.splice(i, 1);
+    state.todos.push(todo);
+  }
   commit();
 }
 
@@ -212,7 +225,7 @@ export function deleteTodo(id) {
   commit();
 }
 
-// 完了を取り消したものは、未完了の一番下に戻す
+// 完了を取り消したものは、その日の未完了の一番下に戻す
 export function setTodoDone(id, done) {
   const t = state.todos.find((x) => x.id === id);
   if (!t) return;
@@ -221,19 +234,29 @@ export function setTodoDone(id, done) {
   commit();
 }
 
-// 未完了の中で to 番目（0 はじまり）に動かす
+// その日の未完了の中で to 番目（0 はじまり）に動かす
 export function moveTodo(id, to) {
-  const active = activeTodos();
-  const from = active.findIndex((t) => t.id === id);
+  const t = state.todos.find((x) => x.id === id);
+  if (!t) return;
+  const list = activeTodos(t.day);
+  const from = list.indexOf(t);
   if (from < 0 || from === to) return;
-  const [t] = active.splice(from, 1);
-  active.splice(to, 0, t);
-  state.todos = [...active, ...state.todos.filter((x) => x.done)];
+  list.splice(from, 1);
+  list.splice(to, 0, t);
+  state.todos = [...state.todos.filter((x) => !list.includes(x)), ...list];
   commit();
 }
 
-export function clearDoneTodos() {
-  state.todos = activeTodos();
+// 前の日の残りを、古い順にその日の一番下へ
+export function carryTodos(day) {
+  const moved = leftoverTodos(day);
+  state.todos = [...state.todos.filter((x) => !moved.includes(x)), ...moved.map((t) => ({ ...t, day }))];
+  commit();
+  return moved.length;
+}
+
+export function clearDoneTodos(day) {
+  state.todos = state.todos.filter((t) => !(t.day === day && t.done));
   commit();
 }
 
@@ -295,6 +318,6 @@ export function wipe() {
 export function importJSON(text) {
   const parsed = JSON.parse(text);
   if (!parsed || typeof parsed.days !== 'object') throw new Error('hibi のバックアップではありません');
-  state = { ...defaults(), ...parsed, settings: { ...defaults().settings, ...parsed.settings } };
+  state = normalize(parsed);
   commit();
 }

@@ -68,7 +68,8 @@ function go(tab) {
 tabbar.addEventListener('click', (e) => {
   const b = e.target.closest('[data-tab]');
   if (!b) return;
-  if (b.dataset.tab === 'today' && ctx.tab === 'today') ctx.day = dayKey();
+  // 開いているタブをもう一度押したら今日に戻る
+  if ((b.dataset.tab === 'today' || b.dataset.tab === 'todo') && ctx.tab === b.dataset.tab) ctx.day = dayKey();
   go(b.dataset.tab);
 });
 

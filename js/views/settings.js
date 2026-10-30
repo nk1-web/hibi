@@ -54,7 +54,7 @@ export function createSettings() {
         <p class="group-label">このアプリ</p>
         <div class="group">
           <button class="row is-nav" data-act="install"><span>ホーム画面に追加する方法</span>${icons.chevronR}</button>
-          <div class="row"><span>バージョン</span><span class="row-value">0.3.0</span></div>
+          <div class="row"><span>バージョン</span><span class="row-value">0.3.1</span></div>
         </div>
       </div>
     </section>`);

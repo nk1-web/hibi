@@ -1,57 +1,33 @@
-// やることの編集と、期限の見せ方
+// やることの編集と、時刻の見せ方
 import * as store from './store.js';
 import { h, esc, refs, haptic } from './ui.js';
 import { openSheet, confirmSheet } from './sheet.js';
 import { icons } from './icons.js';
-import { dayKey, addDays, isToday, isTomorrow, nowMinutes, fmtTime, fmtTimeShort, parseTime, fmtDateJa, snap } from './date.js';
+import { dayKey, nowMinutes, fmtTime, fmtTimeShort, parseTime, snap } from './date.js';
 
-export const hasDueTime = (t) => !!t.due && t.time != null;
+export const hasTime = (t) => t.time != null;
 
+// 今日のもので、決めた時刻を過ぎている
 export function isOverdue(t) {
-  if (!t.due || t.done) return false;
-  const today = dayKey();
-  if (t.due < today) return true;
-  return t.due === today && t.time != null && t.time <= nowMinutes();
+  return !t.done && t.day === dayKey() && t.time != null && t.time <= nowMinutes();
 }
 
-export function dueLabel(t) {
-  if (!t.due) return '';
-  const day = isToday(t.due) ? '今日' : isTomorrow(t.due) ? '明日' : t.due === addDays(dayKey(), -1) ? '昨日' : fmtDateJa(t.due);
-  return t.time != null ? `${day} ${fmtTimeShort(t.time)}` : `${day}まで`;
-}
+export const timeLabel = (t) => (t.time != null ? `${fmtTimeShort(t.time)}まで` : '');
 
-// 期限のクイック選択。日付を指定したときだけ日付の欄を出す
-const DUE_CHIPS = [
-  { id: 'none', label: '期限なし' },
-  { id: 'today', label: '今日' },
-  { id: 'tomorrow', label: '明日' },
-  { id: 'pick', label: '日付を指定' },
-];
-
-function dueChip(due) {
-  if (!due) return 'none';
-  if (isToday(due)) return 'today';
-  if (isTomorrow(due)) return 'tomorrow';
-  return 'pick';
-}
-
-export function openTodoEditor(todo) {
+export function openTodoEditor(todo, { day = dayKey() } = {}) {
   const isNew = !todo;
-  const t = todo ? { ...todo } : { id: store.uid(), title: '', due: null, time: null, notify: true, memo: '', done: false, doneAt: null };
+  const t = todo ? { ...todo } : { id: store.uid(), title: '', day, time: null, notify: true, memo: '', done: false, doneAt: null };
   const defaultTime = () => (r.date.value === dayKey() ? Math.min(snap(nowMinutes() + 60), 23 * 60 + 30) : 9 * 60);
 
   const body = h(`
     <form class="form" autocomplete="off">
       <input class="title-input" data-ref="title" placeholder="やることを入力" maxlength="60" value="${esc(t.title)}">
-      <div class="chips" data-ref="dueChips">${DUE_CHIPS.map(
-        (c) => `<button type="button" class="chip is-due ${c.id === dueChip(t.due) ? 'is-on' : ''}" data-due="${c.id}">${c.label}</button>`
-      ).join('')}</div>
-      <div class="group" data-ref="dueGroup">
-        <label class="row" data-ref="dateRow"><span>日付</span><input type="date" data-ref="date" value="${t.due || ''}"></label>
+      <div class="group">
+        <label class="row"><span>日付</span><input type="date" data-ref="date" value="${t.day}" required></label>
         <label class="row"><span>時刻を決める</span><input type="checkbox" class="switch" data-ref="hasTime" ${t.time != null ? 'checked' : ''}></label>
         <label class="row" data-ref="timeRow"><span>時刻</span><input type="time" data-ref="time" value="${t.time != null ? fmtTime(t.time) : ''}"></label>
         <label class="row" data-ref="notifyRow">
-          <span class="row-main"><b>通知</b><small>期限の前にカレンダーから知らせる</small></span>
+          <span class="row-main"><b>通知</b><small>時刻の前にカレンダーから知らせる</small></span>
           <input type="checkbox" class="switch" data-ref="notify" ${t.notify !== false ? 'checked' : ''}>
         </label>
       </div>
@@ -61,24 +37,8 @@ export function openTodoEditor(todo) {
       ${isNew ? '' : `<button type="button" class="btn is-danger-plain" data-ref="del">${icons.trash}このやることを削除</button>`}
     </form>`);
   const r = refs(body);
-  let chip = dueChip(t.due);
 
-  function sync() {
-    r.dueChips.querySelectorAll('.chip').forEach((c) => c.classList.toggle('is-on', c.dataset.due === chip));
-    r.dueGroup.hidden = chip === 'none';
-    r.dateRow.hidden = chip !== 'pick';
-    r.timeRow.hidden = r.notifyRow.hidden = !r.hasTime.checked;
-  }
-
-  r.dueChips.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-due]');
-    if (!b) return;
-    chip = b.dataset.due;
-    if (chip === 'today') r.date.value = dayKey();
-    else if (chip === 'tomorrow') r.date.value = addDays(dayKey(), 1);
-    else if (chip === 'pick' && !r.date.value) r.date.value = addDays(dayKey(), 2);
-    sync();
-  });
+  const sync = () => (r.timeRow.hidden = r.notifyRow.hidden = !r.hasTime.checked);
   r.hasTime.addEventListener('change', () => {
     if (r.hasTime.checked && !r.time.value) r.time.value = fmtTime(defaultTime());
     sync();
@@ -94,9 +54,8 @@ export function openTodoEditor(todo) {
       r.title.focus();
       return false;
     }
-    const due = chip === 'none' ? null : r.date.value || null;
-    const time = due && r.hasTime.checked ? parseTime(r.time.value) : null;
-    store.saveTodo({ ...t, title, due, time, notify: r.notify.checked, memo: r.memo.value.trim() });
+    const time = r.hasTime.checked ? parseTime(r.time.value) : null;
+    store.saveTodo({ ...t, title, day: r.date.value || t.day, time, notify: r.notify.checked, memo: r.memo.value.trim() });
     haptic();
   }
 

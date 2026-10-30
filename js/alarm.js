@@ -27,11 +27,11 @@ function calItems() {
     const key = addDays(today, i);
     store.getDay(key).plans.filter(wantsNotify).forEach((p) => out.push({ key, start: p.start, end: p.end, title: p.title }));
   }
-  // やることは期限の時刻に 15 分の枠として入れる（通知は予定と同じく 10 分前）
+  // やることは決めた時刻に 15 分の枠として入れる（通知は予定と同じく 10 分前）
   store
-    .activeTodos()
-    .filter((t) => t.due && t.time != null && t.notify !== false && t.due >= today && t.due <= last)
-    .forEach((t) => out.push({ key: t.due, start: t.time, end: t.time + 15, title: `やること：${t.title}` }));
+    .openTodos()
+    .filter((t) => t.time != null && t.notify !== false && t.day >= today && t.day <= last)
+    .forEach((t) => out.push({ key: t.day, start: t.time, end: t.time + 15, title: `やること：${t.title}` }));
   return out;
 }
 
