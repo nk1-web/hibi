@@ -2,12 +2,14 @@ import * as store from './store.js';
 import { icons } from './icons.js';
 import { dayKey } from './date.js';
 import { createToday } from './views/today.js';
+import { createTodo } from './views/todo.js';
 import { createCalendar } from './views/calendar.js';
 import { createDiary } from './views/diary.js';
 import { createSettings } from './views/settings.js';
 
 const TABS = [
   { id: 'today', label: '今日', icon: icons.today },
+  { id: 'todo', label: 'やること', icon: icons.todo },
   { id: 'calendar', label: 'カレンダー', icon: icons.calendar },
   { id: 'diary', label: '日記', icon: icons.diary },
   { id: 'settings', label: '設定', icon: icons.settings },
@@ -29,6 +31,7 @@ const fab = document.getElementById('fab');
 
 const views = {
   today: createToday(ctx),
+  todo: createTodo(ctx),
   calendar: createCalendar(ctx),
   diary: createDiary(ctx),
   settings: createSettings(ctx),
@@ -69,7 +72,9 @@ tabbar.addEventListener('click', (e) => {
   go(b.dataset.tab);
 });
 
+// 右下の＋：やることの画面ではやることを、それ以外では今日の予定を追加
 fab.addEventListener('click', () => {
+  if (ctx.tab === 'todo') return views.todo.add();
   if (ctx.tab !== 'today') go('today');
   views.today.add();
 });

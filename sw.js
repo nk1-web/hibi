@@ -1,5 +1,5 @@
 // ネットワーク優先・失敗時はキャッシュ。更新がすぐ反映され、オフラインでも開ける。
-const CACHE = 'hibi-v2';
+const CACHE = 'hibi-v3';
 const SHELL = [
   './',
   'index.html',
@@ -14,6 +14,8 @@ const SHELL = [
   'js/links.js',
   'js/editors.js',
   'js/alarm.js',
+  'js/todos.js',
+  'js/views/todo.js',
   'js/views/today.js',
   'js/views/calendar.js',
   'js/views/diary.js',

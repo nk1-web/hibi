@@ -22,7 +22,7 @@ export function createSettings() {
           <label class="row"><span>ショートカット名</span><input data-ref="calShortcut" autocapitalize="off"></label>
           <button class="row is-nav" data-act="calGuide"><span>ショートカットの作り方</span>${icons.chevronR}</button>
         </div>
-        <p class="group-foot">これから 7 日間の予定を iPhone の「hibi」カレンダーに入れ、開始前にカレンダーアプリから通知します。</p>
+        <p class="group-foot">これから 7 日間の予定と、時刻つきのやることを iPhone の「hibi」カレンダーに入れ、カレンダーアプリから通知します。</p>
 
         <p class="group-label">アラーム（時計）</p>
         <div class="group">
@@ -54,7 +54,7 @@ export function createSettings() {
         <p class="group-label">このアプリ</p>
         <div class="group">
           <button class="row is-nav" data-act="install"><span>ホーム画面に追加する方法</span>${icons.chevronR}</button>
-          <div class="row"><span>バージョン</span><span class="row-value">0.2.0</span></div>
+          <div class="row"><span>バージョン</span><span class="row-value">0.3.0</span></div>
         </div>
       </div>
     </section>`);
@@ -131,7 +131,7 @@ export function createSettings() {
     else if (act === 'wipe') {
       const ok = await confirmSheet({
         title: 'すべてのデータを消去',
-        message: '予定・実績・日記をすべて消します。元に戻せないので、必要ならさきにバックアップを書き出してください。',
+        message: '予定・実績・日記・やることをすべて消します。元に戻せないので、必要ならさきにバックアップを書き出してください。',
         okLabel: '消去する',
         danger: true,
       });

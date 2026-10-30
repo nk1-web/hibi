@@ -758,6 +758,148 @@ body.has-sheet .clipbar { opacity: 0; pointer-events: none; }
 .empty p { margin: 6px 0 22px; font-size: 13px; line-height: 1.7; }
 .empty .btn { width: auto; padding: 0 24px; }
 
+/* ---------- やること ---------- */
+
+.todo-scroll { padding-left: 16px; padding-right: 16px; }
+.todo-list { position: relative; padding-top: 6px; }
+.todo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+  border-radius: 20px;
+  background: var(--surface);
+  transition: transform 0.28s var(--ease-out), box-shadow 0.2s, opacity 0.3s;
+}
+/* 順位。場所に付いた番号なので、並べ替えても 1, 2, 3 … のまま */
+.todo-rank {
+  flex: none;
+  width: 30px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+.todo.is-first .todo-rank { color: var(--now); }
+.todo-check {
+  flex: none;
+  width: 40px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+.todo-check i {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.75px var(--line-2), inset 0 0 0 1.75px var(--ink-3);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  transition: background 0.25s, box-shadow 0.25s, transform 0.35s var(--ease-spring);
+}
+.todo-check i svg { width: 15px; height: 15px; }
+.todo-check:active i { transform: scale(0.85); }
+.todo.is-checking .todo-check i,
+.todo.is-done .todo-check i { background: var(--ink); box-shadow: none; color: var(--bg); }
+.todo.is-checking .todo-check i { transform: scale(1.12); }
+.todo.is-checking .todo-main b { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.todo.is-checking { opacity: 0.55; transition-delay: 0s, 0s, 0.2s; }
+.todo-main {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 4px 10px 6px;
+}
+.todo-main b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.2s; }
+.todo-main small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.todo-main small svg { width: 12px; height: 12px; flex: none; }
+.todo-main small.is-late { color: var(--now); }
+.todo-main small span { font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
+.todo-grip {
+  flex: none;
+  width: 48px;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  touch-action: none;
+  cursor: grab;
+}
+.todo-grip svg { width: 22px; height: 22px; }
+.todo-list.is-sorting { -webkit-user-select: none; user-select: none; }
+.todo-list.is-sorting .todo-main { pointer-events: none; }
+.todo.is-dragging {
+  z-index: 2;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 14px 34px rgba(20, 18, 14, 0.2), 0 0 0 0.5px var(--line-2);
+}
+.todo.is-dragging .todo-grip { color: var(--ink); cursor: grabbing; }
+.todo.is-dragging .todo-rank { color: var(--ink); }
+.todo.is-dragging.is-first .todo-rank { color: var(--now); }
+
+.todo-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.todo-hint svg { width: 15px; height: 15px; }
+
+.todo-done-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 26px 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.todo-done-head b { margin-left: 6px; color: var(--ink-3); }
+.todo-done-head svg { width: 15px; height: 15px; color: var(--ink-3); transition: transform 0.3s var(--ease-out); }
+.is-open > .todo-done-head svg { transform: rotate(90deg); }
+.todo.is-done { min-height: 52px; background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); padding-left: 0; }
+.todo.is-done .todo-check i { width: 22px; height: 22px; background: var(--ink-3); }
+.todo.is-done .todo-main b { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; font-weight: 400; }
+.todo-done-list .btn { margin-top: 2px; height: 44px; font-size: 14px; }
+
+.chip.is-due { padding: 0 14px; }
+.chip.is-due.is-on { background: var(--ink); color: var(--bg); }
+.row input[type='date'] {
+  flex: none;
+  min-width: 120px;
+  padding: 6px 12px;
+  border: 0;
+  outline: 0;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* ---------- 設定・フォーム共通 ---------- */
 
 .view-settings .scroller { padding-left: 16px; padding-right: 16px; }

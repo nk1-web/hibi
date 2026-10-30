@@ -32,6 +32,7 @@ const DEFAULT_PRESETS = [
 const defaults = () => ({
   version: 1,
   days: {},
+  todos: [],
   presets: DEFAULT_PRESETS.map((p) => ({ ...p })),
   settings: { shortcutName: 'hibi アラーム', calShortcutName: 'hibi カレンダー', calSync: null, dayStartHour: 6 },
 });
@@ -192,6 +193,50 @@ export function resetPresets() {
   commit();
 }
 
+/* ---------- やること（並び順がそのまま優先順位） ---------- */
+
+export const todos = () => state.todos;
+export const activeTodos = () => state.todos.filter((t) => !t.done);
+export const doneTodos = () => state.todos.filter((t) => t.done).sort((a, b) => b.doneAt - a.doneAt);
+
+// 新しいものは一番下（いちばん低い優先順位）に入る
+export function saveTodo(todo) {
+  const i = state.todos.findIndex((t) => t.id === todo.id);
+  if (i >= 0) state.todos[i] = todo;
+  else state.todos.push(todo);
+  commit();
+}
+
+export function deleteTodo(id) {
+  state.todos = state.todos.filter((t) => t.id !== id);
+  commit();
+}
+
+// 完了を取り消したものは、未完了の一番下に戻す
+export function setTodoDone(id, done) {
+  const t = state.todos.find((x) => x.id === id);
+  if (!t) return;
+  state.todos = state.todos.filter((x) => x !== t);
+  state.todos.push({ ...t, done, doneAt: done ? Date.now() : null });
+  commit();
+}
+
+// 未完了の中で to 番目（0 はじまり）に動かす
+export function moveTodo(id, to) {
+  const active = activeTodos();
+  const from = active.findIndex((t) => t.id === id);
+  if (from < 0 || from === to) return;
+  const [t] = active.splice(from, 1);
+  active.splice(to, 0, t);
+  state.todos = [...active, ...state.todos.filter((x) => x.done)];
+  commit();
+}
+
+export function clearDoneTodos() {
+  state.todos = activeTodos();
+  commit();
+}
+
 export function setDiary(key, diary) {
   editDay(key, (d) => {
     d.diary = diary && (diary.title.trim() || diary.body.trim()) ? diary : null;
@@ -240,9 +285,10 @@ export function exportJSON() {
   return JSON.stringify(state, null, 2);
 }
 
-// 設定は残して、予定・実績・日記だけを消す
+// 設定は残して、予定・実績・日記・やることだけを消す
 export function wipe() {
   state.days = {};
+  state.todos = [];
   commit();
 }
 

@@ -5,6 +5,8 @@ const svg = (d, w = 1.7) =>
 export const icons = {
   today: svg('<circle cx="12" cy="12" r="8.25"/><path d="M12 7.25V12l3.1 1.9"/>'),
   calendar: svg('<rect x="3.75" y="5" width="16.5" height="15.25" rx="3.75"/><path d="M3.75 9.9h16.5M8.25 3v3.6M15.75 3v3.6"/>'),
+  todo: svg('<path d="M4.5 7.25l1.9 1.9 3.35-3.4M4.5 15.75l1.9 1.9 3.35-3.4M13 7.5h6.5M13 16h6.5"/>'),
+  grip: svg('<path d="M6.5 9h11M6.5 12h11M6.5 15h11"/>', 1.8),
   diary: svg('<path d="M6.25 3.75h10a2.5 2.5 0 0 1 2.5 2.5v11.5a2.5 2.5 0 0 1-2.5 2.5h-10z"/><path d="M6.25 3.75v16.5M10 8.5h5M10 11.75h3.25"/>'),
   settings: svg('<path d="M4.5 7.5h8.75M17.75 7.5h1.75M4.5 16.5h1.75M10.75 16.5h8.75"/><circle cx="15.5" cy="7.5" r="2.15"/><circle cx="8.5" cy="16.5" r="2.15"/>'),
   plus: svg('<path d="M12 5v14M5 12h14"/>', 2),

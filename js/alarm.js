@@ -18,20 +18,26 @@ function runShortcut(name, lines) {
 
 export const wantsNotify = (p) => p.notify !== false;
 
-// これから 7 日間の、通知オンの予定
-function calPlans() {
+// これから 7 日間の、通知オンの予定と、時刻つきのやること
+function calItems() {
   const today = dayKey();
+  const last = addDays(today, CAL_DAYS - 1);
   const out = [];
   for (let i = 0; i < CAL_DAYS; i++) {
     const key = addDays(today, i);
-    store.getDay(key).plans.filter(wantsNotify).forEach((p) => out.push({ key, p }));
+    store.getDay(key).plans.filter(wantsNotify).forEach((p) => out.push({ key, start: p.start, end: p.end, title: p.title }));
   }
+  // やることは期限の時刻に 15 分の枠として入れる（通知は予定と同じく 10 分前）
+  store
+    .activeTodos()
+    .filter((t) => t.due && t.time != null && t.notify !== false && t.due >= today && t.due <= last)
+    .forEach((t) => out.push({ key: t.due, start: t.time, end: t.time + 15, title: `やること：${t.title}` }));
   return out;
 }
 
 // 反映したときの内容と比べて、変わっていたら「未反映」
 function calSignature() {
-  const s = calPlans().map(({ key, p }) => `${key}${p.start}-${p.end}${p.title}`).join('/');
+  const s = calItems().map((x) => `${x.key}${x.start}-${x.end}${x.title}`).join('/');
   let hash = 5381;
   for (let i = 0; i < s.length; i++) hash = ((hash << 5) + hash + s.charCodeAt(i)) | 0;
   return String(hash);
@@ -39,20 +45,19 @@ function calSignature() {
 
 export function calDirty() {
   const last = store.settings().calSync;
-  if (!last && !calPlans().length) return false;
+  if (!last && !calItems().length) return false;
   return last?.sig !== calSignature();
 }
 
-// 「開始|終了|タイトル」を 1 行ずつ。開始済みの予定は送らない（ショートカット側は未来の分だけ消して入れ直す）
+const calStamp = (key, m) => (m >= 1440 ? `${addDays(key, 1)} ${fmtTime(m - 1440)}` : `${key} ${fmtTime(m)}`);
+
+// 「開始|終了|タイトル」を 1 行ずつ。開始済みのものは送らない（ショートカット側は未来の分だけ消して入れ直す）
 function calLines() {
   const now = nowMinutes();
   const today = dayKey();
-  return calPlans()
-    .filter(({ key, p }) => key !== today || p.start > now)
-    .map(({ key, p }) => {
-      const end = p.end >= 1440 ? `${addDays(key, 1)} 00:00` : `${key} ${fmtTime(p.end)}`;
-      return `${key} ${fmtTime(p.start)}|${end}|${p.title.replace(/\|/g, '／')}`;
-    });
+  return calItems()
+    .filter((x) => x.key !== today || x.start > now)
+    .map((x) => `${calStamp(x.key, x.start)}|${calStamp(x.key, x.end)}|${x.title.replace(/\|/g, '／')}`);
 }
 
 function syncCalendar() {
@@ -111,7 +116,7 @@ export function openAlarmSheet(key) {
       <section class="notify-card">
         <div class="notify-head">
           <span class="notify-icon">${icons.calendar}</span>
-          <span><b>開始前の通知</b><small>これから ${CAL_DAYS} 日間の予定を「hibi」カレンダーに入れ、カレンダーアプリから通知します</small></span>
+          <span><b>開始前の通知</b><small>これから ${CAL_DAYS} 日間の予定と、時刻つきのやることを「hibi」カレンダーに入れ、カレンダーアプリから通知します</small></span>
         </div>
         <p class="notify-state ${dirty ? 'is-dirty' : ''}">
           ${!last ? 'まだ反映していません' : dirty ? '予定が変わっています。反映してください' : `${fmtStamp(last.at)} に反映済み`}
@@ -182,7 +187,7 @@ export function openCalendarGuide() {
         <li><b>「カレンダーイベントを追加」</b><p>タイトルに 3 つ目、開始日に 1 つ目、終了日に 2 つ目の結果を入れます。カレンダーは <code>hibi</code>、通知は <code>10 分前</code> に。</p></li>
         <li><b>試す</b><p>hibi で予定を入れ、右上のベル →「カレンダーに反映」。カレンダーアプリの hibi カレンダーに予定が入れば完成です。</p></li>
       </ol>
-      <p class="guide-note">通知のタイミングは手順 9 の「通知」で変えられます（5 分前、30 分前など）。予定ごとに通知が要らないときは、予定の編集画面で「通知」をオフにすると、カレンダーにも入りません。</p>
+      <p class="guide-note">通知のタイミングは手順 9 の「通知」で変えられます（5 分前、30 分前など）。予定ややることごとに通知が要らないときは、編集画面で「通知」をオフにすると、カレンダーにも入りません。</p>
       <p class="guide-note">初回や削除のときに「許可しますか」と聞かれたら、「常に許可」を選ぶと次から聞かれなくなります。日付がうまく読み取られない場合は、手順 8 のあとに「入力から日付を取得」を挟んでください。</p>
     </div>`);
   openSheet({ title: 'カレンダー用ショートカット', body, full: true });
